@@ -1,0 +1,2478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<modification>
+    <code><![CDATA[Add field in Order and admin]]></code>
+    <name><![CDATA[Add field in Order and admin]]></name>
+    <version><![CDATA[1.0]]></version>
+    <author><![CDATA[Omeecron]]></author>
+
+<!-- Start Add in column left -->
+    <file path="admin/controller/common/column_left.php">
+        <operation>
+            <search><![CDATA[if ($this->user->hasPermission('access', 'localisation/geo_zone')) {]]></search>
+            <add position="before"><![CDATA[
+
+                if ($this->user->hasPermission('access', 'localisation/city')) {
+                    $localisation[] = array(
+                        'name'	   => $this->language->get('text_city'),
+                        'href'     => $this->url->link('localisation/city', 'user_token=' . $this->session->data['user_token'], true),
+                        'children' => array()
+                    );
+                }
+
+                if ($this->user->hasPermission('access', 'localisation/barangay')) {
+                    $localisation[] = array(
+                        'name'	   => $this->language->get('text_barangay'),
+                        'href'     => $this->url->link('localisation/barangay', 'user_token=' . $this->session->data['user_token'], true),
+                        'children' => array()
+                    );
+                }
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="admin/view/template/customer/customer_form.twig">
+        <operation>
+            <search><![CDATA[// Custom Fields]]></search>
+            <add position="before"><![CDATA[
+                html += '  <div class="form-group required">';
+                html += '    <label class="col-sm-2 control-label" for="input-location' + address_row + '">Location</label>';
+                html += '    <div class="col-sm-10"><input type="text" name="address[' + address_row + '][location]"  value="" id="input-location' + address_row + '" class="form-control"></div>';
+                html += '  </div>';
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search index="1"><![CDATA[{% for custom_field in custom_fields %}]]></search>
+            <add position="before"><![CDATA[
+                <div class="form-group required">
+                    <label class="col-sm-2 control-label" for="input-location{{ address_row }}">Location</label>
+                    <div class="col-sm-10">
+                        <input type="text" name="address[{{ address_row }}][location]" value="{{ address.location }}" id="input-location{{ address_row }}" class="form-control">
+                    </div>
+                </div>
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="admin/model/customer/customer.php">
+        <operation>
+            <search><![CDATA['zone_id'        => $address_query->row['zone_id'],]]></search>
+            <add position="after"><![CDATA[
+                'location'        => $address_query->row['location'],
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="admin/language/*/common/column_left.php">
+        <operation>
+            <search><![CDATA[$_['text_recurring']            = 'Recurring Profiles';]]></search>
+            <add position="before"><![CDATA[
+
+                $_['text_city']                 = 'City';
+                $_['text_barangay']             = 'Barangay';
+
+            ]]></add>
+        </operation>
+    </file>
+<!-- End Add in column left -->
+
+    <file path="catalog/model/account/order.php">
+        <operation>
+            <search><![CDATA['payment_city'            => $order_query->row['payment_city'],]]></search>
+            <add position="replace"><![CDATA[
+
+                'payment_citybyadd'           => $order_query->row['payment_citybyadd'],
+                'payment_barangay'            => $order_query->row['payment_barangay'],
+
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA['shipping_city'           => $order_query->row['shipping_city'],]]></search>
+            <add position="replace"><![CDATA[
+
+                'shipping_citybyadd'           => $order_query->row['shipping_citybyadd'],
+                'shipping_barangay'            => $order_query->row['shipping_barangay'],
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="admin/controller/sale/order.php">
+        <operation>
+            <search><![CDATA['zone'      => $order_info['payment_zone'],]]></search>
+            <add position="before"><![CDATA[
+
+                'citybyadd'   => $order_info['payment_citybyadd'],
+                'barangay'    => $order_info['payment_barangay'],
+                'location'    => $order_info['payment_location'],
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA['zone'      => $order_info['shipping_zone'],]]></search>
+            <add position="before"><![CDATA[
+
+                'citybyadd'   => $order_info['shipping_citybyadd'],
+                'barangay'    => $order_info['shipping_barangay'],
+                'location'    => $order_info['shipping_location'],
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$format = '{firstname} {lastname}' . "\n" . '{company}' . "\n" . '{address_1}' . "\n" . '{address_2}' . "\n" . '{city} {postcode}' . "\n" . '{zone}' . "\n" . '{country}';]]></search>
+            <add position="replace"><![CDATA[
+
+                $format = '{firstname} {lastname}' . "\n" . '{company}' . "\n" . '{address_1}' . "\n" . '{address_2}' . "\n" . '{city} {postcode}' . "\n" . '{country}' . "\n" . '{zone}' . "\n" . '{citybyadd}' . "\n" . '{barangay}' . "\n" . '{location}';
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA['{postcode}',]]></search>
+            <add position="after"><![CDATA[
+                '{citybyadd}',
+                '{barangay}',
+                '{location}',
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/controller/account/order.php">
+        <operation>
+            <search><![CDATA[$format = '{firstname} {lastname}' . "\n" . '{company}' . "\n" . '{address_1}' . "\n" . '{address_2}' . "\n" . '{city} {postcode}' . "\n" . '{zone}' . "\n" . '{country}';]]></search>
+            <add position="replace"><![CDATA[
+
+                $format = '{firstname} {lastname}' . "\n" . '{company}' . "\n" . '{address_1}' . "\n" . '{address_2}' . "\n" . '{postcode}' . "\n" . '{country}' . "\n" . '{zone}' . "\n" . '{citybyadd}' . "\n" . '{barangay}';
+
+            ]]></add>
+        </operation>
+        <operation>
+            <search limit="1"><![CDATA['{city}',]]></search>
+            <add position="replace"><![CDATA[
+
+                '{citybyadd}',
+                '{barangay}',
+
+            ]]></add>
+        </operation>
+        <operation>
+            <search limit="1"><![CDATA['city'      => $order_info['payment_city'],]]></search>
+            <add position="replace"><![CDATA[
+
+                'citybyadd'    => $order_info['payment_citybyadd'],
+                'barangay'     => $order_info['payment_barangay'],
+
+            ]]></add>
+        </operation>
+        <operation>
+            <search limit="1"><![CDATA['city'      => $order_info['shipping_city'],]]></search>
+            <add position="replace"><![CDATA[
+
+                'citybyadd'    => $order_info['shipping_citybyadd'],
+                'barangay'     => $order_info['shipping_barangay'],
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="admin/model/sale/order.php">
+        <operation>
+            <search><![CDATA['date_added'              => $order_query->row['date_added'],]]></search>
+            <add position="before"><![CDATA[
+
+                'payment_citybyadd'        => $order_query->row['payment_citybyadd'],
+                'payment_barangay'         => $order_query->row['payment_barangay'],
+                'shipping_citybyadd'       => $order_query->row['shipping_citybyadd'],
+                'shipping_barangay'        => $order_query->row['shipping_barangay'],
+                'payment_location'         => $order_query->row['payment_location'],
+                'shipping_location'        => $order_query->row['shipping_location'],
+
+
+            ]]></add>
+        </operation>
+    </file>
+
+<!-- Start Add Front end -->
+    <file path="catalog/controller/account/account.php">
+        <operation>
+            <search limit="1"><![CDATA[public function country() {]]></search>
+            <add position="before"><![CDATA[
+                
+                public function zone() {
+                    $json = array();
+
+                    $this->load->model('localisation/zone');
+
+                    $country_info = $this->model_localisation_zone->getZone($this->request->get['zone_id']);
+
+                    if ($country_info) {
+                        $this->load->model('localisation/city');
+
+                        $json = array(
+                            'zone_id'       => $country_info['zone_id'],
+                            'name'          => $country_info['name'],
+                            'city'          => $this->model_localisation_city->getCityByRegionId($this->request->get['zone_id']),
+                            'status'        => $country_info['status']
+                       );
+                    }
+
+                    $this->response->addHeader('Content-Type: application/json');
+                    $this->response->setOutput(json_encode($json));
+                }
+
+                public function city() {
+                    $json = array();
+
+                    $this->load->model('localisation/zone');
+
+                    $country_info = $this->model_localisation_zone->getZone($this->request->get['zone_id']);
+
+                    if ($country_info) {
+                        $this->load->model('localisation/city');
+
+                        $json = array(
+                            'zone_id'       => $country_info['zone_id'],
+                            'name'            => $country_info['name'],
+                            'city'            => $this->model_localisation_city->getCityByRegionId($this->request->get['zone_id']),
+                            'status'          => $country_info['status']
+                        );
+                    }
+
+                    $this->response->addHeader('Content-Type: application/json');
+                    $this->response->setOutput(json_encode($json));
+                }
+
+                public function barangay() {
+                    $json = array();
+
+                    $this->load->model('localisation/city');
+
+                    $country_info = $this->model_localisation_city->getCity($this->request->get['city_id']);
+
+                    if ($country_info) {
+                        $this->load->model('localisation/barangay');
+
+                        $json = array(
+                            'city_id'       => $country_info['city_id'],
+                            'name'          => $country_info['name'],
+                            'barangay'      => $this->model_localisation_barangay->getBarangayByCityId($this->request->get['city_id']),
+                            'status'        => $country_info['status']
+                        );
+                    }
+
+                    $this->response->addHeader('Content-Type: application/json');
+                    $this->response->setOutput(json_encode($json));
+                }
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/controller/account/address.php">
+        <operation>
+            <search limit="1"><![CDATA['{city}',]]></search>
+            <add position="replace"><![CDATA[
+
+                '{citybyadd}',
+                '{barangay}',
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[{city}]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[if (isset($this->error['city'])) {]]></search>
+            <add position="replace" offset="4"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[if (isset($this->request->post['city'])) {]]></search>
+            <add position="replace" offset="6"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[if ((utf8_strlen(trim($this->request->post['city'])) < 2) || (utf8_strlen(trim($this->request->post['city'])) > 128)) {]]></search>
+            <add position="replace" offset="2"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA['city'      => $result['city'],]]></search>
+            <add position="replace"><![CDATA[
+
+                'citybyadd'     => $result['citybyadd'],
+                'barangay'      => $result['barangay'],
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[if (isset($this->request->post['custom_field']['address'])) {]]></search>
+            <add position="before"><![CDATA[
+
+                if (isset($this->request->post['city_id'])) {
+                    $data['city_id'] = (int)$this->request->post['city_id'];
+                }  elseif (!empty($address_info)) {
+                    $data['city_id'] = $address_info['city_id'];
+                } else {
+                    $data['city_id'] = '';
+                }
+
+                if (isset($this->request->post['barangay_id'])) {
+                    $data['barangay_id'] = (int)$this->request->post['barangay_id'];
+                }  elseif (!empty($address_info)) {
+                    $data['barangay_id'] = $address_info['barangay_id'];
+                } else {
+                    $data['barangay_id'] = '';
+                }
+
+                if (!empty($address_info)) {
+					$data['cities'] = $this->model_account_address->getCitiesData($address_info['zone_id']);
+					if(!empty($this->model_account_address->getbarangayData($address_info['city_id']))){
+						$data['barangays'] = $this->model_account_address->getbarangayData($address_info['city_id']);
+					}else{
+						$data['barangays'] = 1;
+					}
+				}
+
+                if (!empty($address_info)) {
+					$location = explode(',', $address_info['location']);
+                    $data['lat'] = $location[0];
+                } else {
+                    $data['lat'] = '';
+                }
+
+				if (!empty($address_info)) {
+					$location = explode(',', $address_info['location']);
+                    $data['long'] = $location[1];
+                } else {
+                    $data['long'] = '';
+                }
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[// Custom field validation]]></search>
+            <add position="before"><![CDATA[
+
+                //if (!isset($this->request->post['city_id']) || $this->request->post['city_id'] == '' || !is_numeric($this->request->post['city_id'])) {
+                    //$this->error['error']['city'] = $this->language->get('error_city');
+                //}
+                if (!isset($this->request->post['barangay_id']) || $this->request->post['barangay_id'] == '' || !is_numeric($this->request->post['barangay_id'])) {
+                    $this->error['error']['barangay'] = $this->language->get('error_barangay');
+                }
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/language/*/account/address.php">
+        <operation>
+            <search limit="1"><![CDATA[$_['entry_default']      = 'Default Address';]]></search>
+            <add position="before"><![CDATA[
+
+                    $_['entry_barangay']     = 'Barangay';
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/controller/mail/order.php">
+        <operation>
+            <search limit="1"><![CDATA['city'      => $order_info['payment_city'],]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA['city'      => $order_info['shipping_city'],]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/model/account/address.php">
+        <operation>
+            <search limit="1"><![CDATA[city = '" . $this->db->escape($data['city']) . "',]]></search>
+            <add position="replace"><![CDATA[ ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA['city'           => $result['city'],]]></search>
+            <add position="replace"><![CDATA[ ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[public function getTotalAddresses() {]]></search>
+            <add position="before"><![CDATA[
+
+                public function getCitiesData($zone_id) {
+                    $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "city WHERE zone_id = '" . (int)$zone_id . "'");
+
+                    return $query->rows;
+                }
+
+                public function getbarangayData($city_id) {
+                    $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "barangay WHERE city_id = '" . (int)$city_id . "'");
+
+                    return $query->rows;
+                }
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[$zone_query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "zone` WHERE zone_id = '" . (int)$address_query->row['zone_id'] . "'");]]></search>
+            <add position="before"><![CDATA[
+
+                $city_query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "city` WHERE city_id = '" . (int)$address_query->row['city_id'] . "'");
+
+                if ($city_query->num_rows) {
+                    $city = $city_query->row['name'];
+                    $city_code = $city_query->row['code'];
+                } else {
+                    $city = '';
+                    $city_code = '';
+                }
+
+                $barangay_query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "barangay` WHERE barangay_id = '" . (int)$address_query->row['barangay_id'] . "'");
+
+                if ($barangay_query->num_rows) {
+                    $barangay = $barangay_query->row['name'];
+                    $barangay_code = $barangay_query->row['code'];
+                } else {
+                    $barangay = '';
+                    $barangay_code = '';
+                }
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA['country_id'     => $address_query->row['country_id'],]]></search>
+            <add position="before"><![CDATA[
+                
+				'city_id'      	 => $address_query->row['city_id'],
+				'barangay_id'    => $address_query->row['barangay_id'],
+				'citybyadd'      => $city,
+				'city_code'      => $city_code,
+				'barangay'       => $barangay,
+				'barangay_code'  => $barangay_code,
+                'location'       => $address_query->row['location'],
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[$zone_query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "zone` WHERE zone_id = '" . (int)$result['zone_id'] . "'");]]></search>
+            <add position="before"><![CDATA[
+
+                $city_query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "city` WHERE city_id = '" . (int)$result['city_id'] . "'");
+
+                if ($city_query->num_rows) {
+                    $city = $city_query->row['name'];
+                    $city_code = $city_query->row['code'];
+                } else {
+                    $city = '';
+                    $city_code = '';
+                }
+
+                $barangay_query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "barangay` WHERE barangay_id = '" . (int)$result['barangay_id'] . "'");
+
+                if ($barangay_query->num_rows) {
+                    $barangay = $barangay_query->row['name'];
+                    $barangay_code = $barangay_query->row['code'];
+                } else {
+                    $barangay = '';
+                    $barangay_code = '';
+                }
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA['country_id'     => $result['country_id'],]]></search>
+            <add position="before"><![CDATA[
+
+				'city_id'      	 => $result['city_id'],
+				'barangay_id'    => $result['barangay_id'],
+				'citybyadd'      => $city,
+				'city_code'      => $city_code,
+				'barangay'       => $barangay,
+				'barangay_code'  => $barangay_code,
+                'location'       => $result['location'],
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[$address_id = $this->db->getLastId();]]></search>
+            <add position="after"><![CDATA[
+                if($data['payment_lat'] && $data['payment_long']){
+                    $location = $data['payment_lat']. ','. $data['payment_long'];
+                } elseif($data['shipping_lat'] && $data['shipping_long']){
+                    $location = $data['shipping_lat']. ','. $data['shipping_long'];
+                } else{
+                    $location = '';
+                }
+                $this->db->query("UPDATE " . DB_PREFIX . "address SET city_id = '" . (int)$data['city_id'] . "', barangay_id = '" . (int)$data['barangay_id'] . "', location = '".$location."' WHERE address_id = '" . (int)$address_id . "'");
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[$this->db->query("UPDATE " . DB_PREFIX . "address SET firstname ]]></search>
+            <add position="after"><![CDATA[
+                if($data['payment_lat'] && $data['payment_long']){
+                    $location = $data['payment_lat']. ','. $data['payment_long'];
+                } elseif($data['shipping_lat'] && $data['shipping_long']){
+                    $location = $data['shipping_lat']. ','. $data['shipping_long'];
+                } else{
+                    $location = '';
+                }
+                $this->db->query("UPDATE " . DB_PREFIX . "address SET city_id = '" . (int)$data['city_id'] . "', barangay_id = '" . (int)$data['barangay_id'] . "', location = '".$location."' WHERE address_id = '" . (int)$address_id . "'");
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/view/theme/default/template/account/address_form.twig">
+        <operation>
+            <search limit="1"><![CDATA[<label class="col-sm-2 control-label" for="input-city">{{ entry_city }}</label>]]></search>
+            <add position="replace" offset="6"><![CDATA[ ]]></add>
+        </operation>
+
+        <operation>
+            <search index="4"><![CDATA[<div class="form-group required">]]></search>
+            <add position="replace" offset="6"><![CDATA[ ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[{% for custom_field in custom_fields %}]]></search>
+            <add position="before"><![CDATA[
+                
+                <div class="form-group required">
+                    <label class="col-sm-2 control-label" for="input-city">{{ entry_city }}</label>
+                    <div class="col-sm-10">
+                    <select name="city_id" id="input-city" class="form-control">
+                      <option value="">{{ text_select }}</option>
+                      {% for city in cities %}
+                        {% if city.city_id == city_id %}
+                          <option value="{{ city.city_id }}" selected="selected">{{ city.name }}</option>
+                        {% else %}
+                          <option value="{{ city.city_id }}">{{ city.name }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    </div>
+                </div>
+
+                <div class="form-group required" {% if barangays == 1 %} style = "display: none;" {% endif %}>
+                    <label class="col-sm-2 control-label" for="input-barangay">{{ entry_barangay }}</label>
+                    <div class="col-sm-10">
+                    <select name="barangay_id" id="input-barangay" class="form-control">
+                      <option value="">{{ text_select }}</option>
+                      {% for barangay in barangays %}
+                        {% if barangay.barangay_id == barangay_id %}
+                          <option value="{{ barangay.barangay_id }}" selected="selected">{{ barangay.name }}</option>
+                        {% else %}
+                          <option value="{{ barangay.barangay_id }}">{{ barangay.name }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    </div>
+                </div>
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search limit="1"><![CDATA[$('select[name=\'country_id\']').trigger('change');]]></search>
+            <add position="before"><![CDATA[
+                
+                $('select[name=\'zone_id\']').on('change', function() {
+                    $.ajax({
+                        url: 'index.php?route=account/account/zone&zone_id=' + this.value,
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('select[name=\'zone_id\']').prop('disabled', true);
+                        },
+                        complete: function() {
+                            $('select[name=\'zone_id\']').prop('disabled', false);
+                        },
+                        success: function(json) {
+                            html = '<option value="">{{ text_select }}</option>';
+
+                            if (json['city'] && json['city'] != '') {
+                                for (i = 0; i < json['city'].length; i++) {
+                                    html += '<option value="' + json['city'][i]['city_id'] + '"';
+                                    
+                                    if (json['city'][i]['city_id'] == '{{ city_id }}') {
+                                        html += ' selected="selected"';
+                                    }
+                                    
+                                    html += '>' + json['city'][i]['name'] + '</option>';
+                                }
+                            } else {
+                                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                            }
+                            
+                            $('select[name=\'city_id\']').html(html);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+                });
+
+                //$('select[name=\'region_id\']').on('change', function() {
+                //    $.ajax({
+                //        url: 'index.php?route=account/account/city&region_id=' + this.value,
+                //        dataType: 'json',
+                //        beforeSend: function() {
+                //            $('select[name=\'region_id\']').prop('disabled', true);
+                //        },
+                //        complete: function() {
+                //            $('select[name=\'region_id\']').prop('disabled', false);
+                //        },
+                //        success: function(json) {
+                //            html = '<option value="">{{ text_select }}</option>';
+
+                //            if (json['city'] && json['city'] != '') {
+                //                for (i = 0; i < json['city'].length; i++) {
+                //                    html += '<option value="' + json['city'][i]['city_id'] + '"';
+                //                    
+                //                    if (json['city'][i]['city_id'] == '{{ city_id }}') {
+                //                        html += ' selected="selected"';
+                //                    }
+                //                    
+                //                    html += '>' + json['city'][i]['name'] + '</option>';
+                //                }
+                //            } else {
+                //                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                //            }
+                //            
+                //            $('select[name=\'city_id\']').html(html);
+                //        },
+                //        error: function(xhr, ajaxOptions, thrownError) {
+                //            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                //        }
+                //    });
+                //});
+
+                $('select[name=\'city_id\']').on('change', function() {
+                    $.ajax({
+                        url: 'index.php?route=account/account/barangay&city_id=' + this.value,
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('select[name=\'city_id\']').prop('disabled', true);
+                        },
+                        complete: function() {
+                            $('select[name=\'city_id\']').prop('disabled', false);
+                        },
+                        success: function(json) {
+                            html = '<option value="">{{ text_select }}</option>';
+
+                            if (json['barangay'] && json['barangay'] != '') {
+                                for (i = 0; i < json['barangay'].length; i++) {
+                                    html += '<option value="' + json['barangay'][i]['barangay_id'] + '"';
+                                    
+                                    if (json['barangay'][i]['barangay_id'] == '{{ barangay_id }}') {
+                                        html += ' selected="selected"';
+                                    }
+                                    
+                                    html += '>' + json['barangay'][i]['name'] + '</option>';
+                                }
+                            } else {
+                                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                            }
+                            
+                            $('select[name=\'barangay_id\']').html(html);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+                });
+
+            ]]></add>
+        </operation>
+
+        <!-- map data start -->
+        <operation>
+            <search index="2"><![CDATA[<div class="form-group">]]></search>
+            <add position="before"><![CDATA[
+                <style>
+                .map {
+                    border: none;
+                    height: 400px;
+                }
+                @media only screen and (max-width: 320px) {
+                    .map {
+                        border: none;
+                        height: 200px;
+                    }
+                }
+                </style>
+
+                <div class="form-group" id="location-map">
+                    <label class="col-sm-2 control-label">Map details</label>
+                    <div class="col-sm-10 location-map">
+                    <input type="hidden" name="payment_lat" id="lat">
+                    <input type="hidden" name="payment_long" id="long">
+                    <div id="map" class="map"></div>
+                    <script type="text/javascript">
+                    $( document ).ready(function() {
+                        if($('#input-barangay :selected').val() == 0){
+                        $('#location-map').css('display', 'none');
+                        }
+                        $('#input-barangay').on('change', function () {
+                            var optionSelected = $("option:selected", this);
+                            var valueSelected = this.value;
+                            if(valueSelected != '' && valueSelected != '0'){
+                                $('#location-map').css('display', 'block');
+                            } else {
+                                $('#location-map').css('display', 'none');
+                            }
+                        });
+                        maploaded();
+                    });
+                    function maploaded() {
+                        var map;
+                        var markers = [];
+
+                        {% if lat and long %}
+                        var haightAshbury = {lat: {{ lat }}, lng: {{ long }} };
+                        {% else %}
+                        var haightAshbury = {lat: 23.2748308, lng: 77.4519248};
+                        {% endif %}
+
+                            var mapOptions = {
+                            zoom: 13,
+                            mapTypeId: 'terrain',
+                            mapTypeControl: true,
+                            center: haightAshbury,
+                            fullscreenControl: false
+                            }
+
+                        map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+                        if(navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(function(position) {
+                            user_location = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                            map.setCenter(user_location);
+                            console.log(user_location);
+                            addMarker(user_location);
+                            }, function(error) {
+                                console.log(error);
+                                user_location = new google.maps.LatLng(haightAshbury.lat, haightAshbury.lng);
+                                console.log(user_location);
+                                map.setCenter(user_location);
+                                addMarker(user_location);
+                            });
+                        }
+
+                        function addMarker(location) {
+                            var marker = new google.maps.Marker({
+                            position: location,
+                            map: map,
+                            draggable:true,
+                            title:"Drag me!"
+                            });
+                            $(`#lat`).val(location.lat());
+                            $(`#long`).val(location.lng());
+                            markers.push(marker);
+                            marker.addListener('drag', handleDragEvent);
+                            marker.addListener('dragend', handleDragEvent);
+                        }
+
+                        // Sets the map on all markers in the array.
+                        function setMapOnAll(map) {
+                        for (var i = 0; i < markers.length; i++) {
+                            markers[i].setMap(map);
+                        }
+                        }
+
+                        // Removes the markers from the map, but keeps them in the array.
+                        function clearMarkers() {
+                        setMapOnAll(null);
+                        }
+
+                        // Deletes all markers in the array by removing references to them.
+                        function deleteMarkers() {
+                        clearMarkers();
+                        markers = [];
+                        }
+
+                        function handleDragEvent(e) {
+                            const latLng = e.latLng;
+                            var lng = latLng.lng();
+                            var lat = latLng.lat();
+                            $(`#lat`).val(lat);
+                            $(`#long`).val(lng);
+                        }
+                    }
+                    </script>
+                    </div>
+                </div>
+            ]]></add>
+        </operation>
+        <!-- map data end -->
+    </file>
+
+    <!-- Start checkout -->
+    <file path="catalog/controller/checkout/checkout.php">
+        <operation>
+            <search><![CDATA[public function customfield() {]]></search>
+            <add position="before"><![CDATA[
+
+                //public function zone() {
+                //    $json = array();
+
+                //    $this->load->model('localisation/zone');
+
+                //    $country_info = $this->model_localisation_zone->getZone($this->request->get['zone_id']);
+
+                //    if ($country_info) {
+                //        $this->load->model('localisation/region');
+
+                //        $json = array(
+                //            'zone_id'         => $country_info['zone_id'],
+                //            'country_id'      => $country_info['country_id'],
+                //            'name'            => $country_info['name'],
+                //            'region'          => $this->model_localisation_region->getRegionByZoneId($this->request->get['zone_id']),
+                //            'status'          => $country_info['status']
+                //        );
+                //    }
+
+                //    $this->response->addHeader('Content-Type: application/json');
+                //    $this->response->setOutput(json_encode($json));
+                //}
+
+                public function city() {
+                    $json = array();
+
+                    $this->load->model('localisation/zone');
+
+                    $country_info = $this->model_localisation_zone->getZone($this->request->get['zone_id']);
+
+                    if ($country_info) {
+                        $this->load->model('localisation/city');
+
+                        $json = array(
+                            'zone_id'       => $country_info['zone_id'],
+                            'name'            => $country_info['name'],
+                            'city'            => $this->model_localisation_city->getCityByRegionId($this->request->get['zone_id']),
+                            'status'          => $country_info['status']
+                        );
+                    }
+
+                    $this->response->addHeader('Content-Type: application/json');
+                    $this->response->setOutput(json_encode($json));
+                }
+
+                public function barangay() {
+                    $json = array();
+
+                    $this->load->model('localisation/city');
+
+                    $country_info = $this->model_localisation_city->getCity($this->request->get['city_id']);
+
+                    if ($country_info) {
+                        $this->load->model('localisation/barangay');
+
+                        $json = array(
+                            'city_id'       => $country_info['city_id'],
+                            'name'          => $country_info['name'],
+                            'barangay'      => $this->model_localisation_barangay->getBarangayByCityId($this->request->get['city_id']),
+                            'status'        => $country_info['status']
+                        );
+                    }
+
+                    $this->response->addHeader('Content-Type: application/json');
+                    $this->response->setOutput(json_encode($json));
+                }
+
+            ]]></add>
+        </operation>
+    </file>
+    <!-- End checkout -->
+
+    <!-- Start payment_address -->
+    <file path="catalog/controller/checkout/payment_address.php">
+        <operation>
+            <search><![CDATA[if ((utf8_strlen($this->request->post['city']) < 2) || (utf8_strlen($this->request->post['city']) > 32)) {]]></search>
+            <add position="replace" offset="2"><![CDATA[
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[if (isset($this->session->data['payment_address']['zone_id'])) {]]></search>
+            <add position="before"><![CDATA[
+
+                if (isset($this->session->data['payment_address']['city_id'])) {
+                    $data['city_id'] = $this->session->data['payment_address']['city_id'];
+                } else {
+                    $data['city_id'] = '';
+                }
+
+                if (isset($this->session->data['payment_address']['barangay_id'])) {
+                    $data['barangay_id'] = $this->session->data['payment_address']['barangay_id'];
+                } else {
+                    $data['barangay_id'] = '';
+                }
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[// Custom field validation]]></search>
+            <add position="before"><![CDATA[
+
+				if (!isset($this->request->post['city_id']) || $this->request->post['city_id'] == '' || !is_numeric($this->request->post['city_id'])) {
+					$json['error']['city'] = $this->language->get('error_city');
+				}
+				if (!isset($this->request->post['barangay_id']) || $this->request->post['barangay_id'] == '' || !is_numeric($this->request->post['barangay_id'])) {
+					$json['error']['barangay'] = $this->language->get('error_barangay');
+				}
+
+            ]]></add>
+        </operation>
+    </file>
+    <!-- End payment_address -->
+
+    <!-- Start shipping_address -->
+    <file path="catalog/controller/checkout/shipping_address.php">
+        <operation>
+            <search><![CDATA[if ((utf8_strlen(trim($this->request->post['city'])) < 2) || (utf8_strlen(trim($this->request->post['city'])) > 128)) {]]></search>
+            <add position="replace" offset="2"><![CDATA[
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[if (isset($this->session->data['shipping_address']['zone_id'])) {]]></search>
+            <add position="before"><![CDATA[
+
+                if (isset($this->session->data['shipping_address']['city_id'])) {
+                    $data['city_id'] = $this->session->data['shipping_address']['city_id'];
+                } else {
+                    $data['city_id'] = '';
+                }
+
+                if (isset($this->session->data['shipping_address']['barangay_id'])) {
+                    $data['barangay_id'] = $this->session->data['shipping_address']['barangay_id'];
+                } else {
+                    $data['barangay_id'] = '';
+                }
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[// Custom field validation]]></search>
+            <add position="before"><![CDATA[
+
+				if (!isset($this->request->post['city_id']) || $this->request->post['city_id'] == '' || !is_numeric($this->request->post['city_id'])) {
+					$json['error']['city'] = $this->language->get('error_city');
+				}
+				if (!isset($this->request->post['barangay_id']) || $this->request->post['barangay_id'] == '' || !is_numeric($this->request->post['barangay_id'])) {
+					$json['error']['barangay'] = $this->language->get('error_barangay');
+				}
+
+            ]]></add>
+        </operation>
+    </file>
+    <!-- End shipping_address -->
+
+    <!-- Start guest -->
+    <file path="catalog/controller/checkout/guest.php">
+        <operation>
+            <search><![CDATA[if ((utf8_strlen(trim($this->request->post['city'])) < 2) || (utf8_strlen(trim($this->request->post['city'])) > 128)) {]]></search>
+            <add position="replace" offset="2"><![CDATA[
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[if (isset($this->session->data['payment_address']['city'])) {]]></search>
+            <add position="replace" offset="4"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[if (isset($this->session->data['payment_address']['zone_id'])) {]]></search>
+            <add position="before"><![CDATA[
+
+                if (isset($this->session->data['payment_address']['city_id'])) {
+                    $data['city_id'] = $this->session->data['payment_address']['city_id'];
+                } elseif (isset($this->session->data['shipping_address']['city_id'])) {
+                    $data['city_id'] = $this->session->data['shipping_address']['city_id'];
+                } else {
+                    $data['city_id'] = '';
+                }
+
+                if (isset($this->session->data['payment_address']['barangay_id'])) {
+                    $data['barangay_id'] = $this->session->data['payment_address']['barangay_id'];
+                } elseif (isset($this->session->data['shipping_address']['barangay_id'])) {
+                    $data['barangay_id'] = $this->session->data['shipping_address']['barangay_id'];
+                } else {
+                    $data['barangay_id'] = '';
+                }
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[// Customer Group]]></search>
+            <add position="before"><![CDATA[
+
+				if (!isset($this->request->post['city_id']) || $this->request->post['city_id'] == '' || !is_numeric($this->request->post['city_id'])) {
+					$json['error']['city'] = $this->language->get('error_city');
+				}
+				if (!isset($this->request->post['barangay_id']) || $this->request->post['barangay_id'] == '' || !is_numeric($this->request->post['barangay_id'])) {
+					$json['error']['barangay'] = $this->language->get('error_barangay');
+				}
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$this->session->data['payment_address']['city'] = $this->request->post['city'];]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$this->session->data['payment_address']['zone_id'] = $this->request->post['zone_id'];]]></search>
+            <add position="after"><![CDATA[
+
+				$this->session->data['payment_address']['city_id'] = $this->request->post['city_id'];
+				$this->session->data['payment_address']['barangay_id'] = $this->request->post['barangay_id'];
+                $this->session->data['payment_address']['payment_lat'] = $this->request->post['payment_lat'];
+				$this->session->data['payment_address']['payment_long'] = $this->request->post['payment_long'];
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$this->session->data['shipping_address']['city'] = $this->request->post['city'];]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$this->session->data['shipping_address']['zone_id'] = $this->request->post['zone_id'];]]></search>
+            <add position="after"><![CDATA[
+
+				$this->session->data['shipping_address']['city_id'] = $this->request->post['city_id'];
+				$this->session->data['shipping_address']['barangay_id'] = $this->request->post['barangay_id'];
+                $this->session->data['shipping_address']['shipping_lat'] = $this->request->post['payment_lat'];
+				$this->session->data['shipping_address']['shipping_long'] = $this->request->post['payment_lat'];
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/controller/checkout/guest_shipping.php">
+        <operation>
+            <search><![CDATA[if ((utf8_strlen(trim($this->request->post['city'])) < 2) || (utf8_strlen(trim($this->request->post['city'])) > 128)) {]]></search>
+            <add position="replace" offset="2"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[if (isset($this->session->data['shipping_address']['city'])) {]]></search>
+            <add position="replace" offset="4"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[if (isset($this->session->data['shipping_address']['zone_id'])) {]]></search>
+            <add position="before"><![CDATA[
+                if (isset($this->session->data['shipping_address']['city_id'])) {
+                    $data['city_id'] = $this->session->data['shipping_address']['city_id'];
+                } else {
+                    $data['city_id'] = '';
+                }
+
+                if (isset($this->session->data['shipping_address']['barangay_id'])) {
+                    $data['barangay_id'] = $this->session->data['shipping_address']['barangay_id'];
+                } else {
+                    $data['barangay_id'] = '';
+                }
+
+                $this->load->model('account/address');
+
+					$data['cities'] = $this->model_account_address->getCitiesData($this->session->data['shipping_address']['zone_id']);
+					$data['barangays'] = $this->model_account_address->getbarangayData($this->session->data['shipping_address']['city_id']);
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[// Custom field validation]]></search>
+            <add position="before"><![CDATA[
+
+				if (!isset($this->request->post['city_id']) || $this->request->post['city_id'] == '' || !is_numeric($this->request->post['city_id'])) {
+					$json['error']['city'] = $this->language->get('error_city');
+				}
+				if (!isset($this->request->post['barangay_id']) || $this->request->post['barangay_id'] == '' || !is_numeric($this->request->post['barangay_id'])) {
+					$json['error']['barangay'] = $this->language->get('error_barangay');
+				}
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$this->session->data['shipping_address']['city'] = $this->request->post['city'];]]></search>
+            <add position="replace"><![CDATA[
+				$this->session->data['shipping_address']['city_id'] = $this->request->post['city_id'];
+				$this->session->data['shipping_address']['barangay_id'] = $this->request->post['barangay_id'];
+                $this->session->data['shipping_address']['shipping_lat'] = $this->request->post['shipping_lat'];
+				$this->session->data['shipping_address']['shipping_long'] = $this->request->post['shipping_long'];
+            ]]></add>
+        </operation>
+    </file>
+    <!-- End guest -->
+
+    <!-- Start register -->
+    <file path="catalog/controller/checkout/register.php">
+        <operation>
+            <search><![CDATA[if ((utf8_strlen(trim($this->request->post['city'])) < 2) || (utf8_strlen(trim($this->request->post['city'])) > 128)) {]]></search>
+            <add position="before" offset="2"><![CDATA[
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[if ((utf8_strlen(trim($this->request->post['city'])) < 2) || (utf8_strlen(trim($this->request->post['city'])) > 128)) {]]></search>
+            <add position="replace" offset="2"><![CDATA[
+
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[if (isset($this->session->data['shipping_address']['zone_id'])) {]]></search>
+            <add position="before"><![CDATA[
+
+                if (isset($this->session->data['shipping_address']['city_id'])) {
+                    $data['city_id'] = $this->session->data['shipping_address']['city_id'];
+                } else {
+                    $data['city_id'] = '';
+                }
+
+                if (isset($this->session->data['shipping_address']['barangay_id'])) {
+                    $data['barangay_id'] = $this->session->data['shipping_address']['barangay_id'];
+                } else {
+                    $data['barangay_id'] = '';
+                }
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[if ((utf8_strlen(html_entity_decode($this->request->post['password'], ENT_QUOTES, 'UTF-8')) < 4) || (utf8_strlen(html_entity_decode($this->request->post['password'], ENT_QUOTES, 'UTF-8')) > 40)) {]]></search>
+            <add position="before"><![CDATA[
+
+			if (!isset($this->request->post['city_id']) || $this->request->post['city_id'] == '' || !is_numeric($this->request->post['city_id'])) {
+				$json['error']['city'] = $this->language->get('error_city');
+			}
+			if (!isset($this->request->post['barangay_id']) || $this->request->post['barangay_id'] == '' || !is_numeric($this->request->post['barangay_id'])) {
+				$json['error']['barangay'] = $this->language->get('error_barangay');
+			}
+
+            ]]></add>
+        </operation>
+    </file>
+    <!-- End register -->
+
+    <!-- Start confirm -->
+    <file path="catalog/controller/checkout/confirm.php">
+        <operation>
+            <search><![CDATA[$order_data['payment_city'] = $this->session->data['payment_address']['city'];]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$order_data['shipping_city'] = $this->session->data['shipping_address']['city'];]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$order_data['shipping_city'] = '';]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$order_data['payment_country'] = $this->session->data['payment_address']['country'];]]></search>
+            <add position="before"><![CDATA[
+
+                $order_data['payment_citybyadd'] = $this->session->data['payment_address']['citybyadd'];
+                $order_data['payment_barangay'] = $this->session->data['payment_address']['barangay'];
+                if($this->session->data['payment_address']['payment_lat'] && $this->session->data['payment_address']['payment_long']){
+					$this->session->data['payment_address']['location'] = $this->session->data['payment_address']['payment_lat'] .','.$this->session->data['payment_address']['payment_long'];
+				}
+                $order_data['payment_location'] = $this->session->data['payment_address']['location'];
+
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$order_data['shipping_country'] = $this->session->data['shipping_address']['country'];]]></search>
+            <add position="before"><![CDATA[
+
+				$order_data['shipping_citybyadd'] = $this->session->data['shipping_address']['citybyadd'];
+				$order_data['shipping_barangay'] = $this->session->data['shipping_address']['barangay'];
+                if($this->session->data['shipping_address']['shipping_lat'] && $this->session->data['shipping_address']['shipping_long']){
+					$this->session->data['shipping_address']['location'] = $this->session->data['shipping_address']['shipping_lat'] .','.$this->session->data['shipping_address']['shipping_long'];
+				}
+                $order_data['shipping_location'] = $this->session->data['shipping_address']['location'];
+
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$order_data['shipping_country'] = '';]]></search>
+            <add position="before"><![CDATA[
+
+				$order_data['shipping_citybyadd'] = '';
+				$order_data['shipping_barangay'] = '';
+				$order_data['shipping_location'] = '';
+
+
+            ]]></add>
+        </operation>
+    </file>
+    <!-- End confirm -->
+
+    <!-- Start Language -->
+    <file path="catalog/language/*/checkout/checkout.php">
+        <operation>
+            <search><![CDATA[$_['entry_zone']                     = 'Region / State';]]></search>
+            <add position="replace"><![CDATA[
+
+                $_['entry_zone']                     = 'State';
+                $_['entry_region']                   = 'Region';
+                $_['entry_barangay']                 = 'Barangay';
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$_['error_zone']                     = 'Please select a region / state!';]]></search>
+            <add position="replace"><![CDATA[
+
+                $_['error_zone']                     = 'Please select a state!';
+				$_['error_region']                   = 'Please select a Region!';
+                $_['error_barangay']                 = 'Please select a Barangay!';
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/language/*/account/address.php">
+        <operation>
+            <search><![CDATA[$_['entry_zone']                     = 'Region / State';]]></search>
+            <add position="replace"><![CDATA[
+
+                $_['entry_zone']                     = 'State';
+                $_['entry_region']                   = 'Region';
+                $_['entry_barangay']                 = 'Barangay';
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$_['error_zone']                     = 'Please select a region / state!';]]></search>
+            <add position="replace"><![CDATA[
+
+                $_['error_zone']                     = 'Please select a state!';
+				$_['error_region']                   = 'Please select a Region!';
+                $_['error_barangay']                 = 'Please select a Barangay!';
+
+            ]]></add>
+        </operation>
+    </file>
+    <!-- End Language -->
+
+    <file path="catalog/model/checkout/order.php">
+        <operation>
+            <search><![CDATA[$order_id = $this->db->getLastId();]]></search>
+            <add position="after"><![CDATA[
+
+                $this->db->query("UPDATE " . DB_PREFIX . "order SET payment_citybyadd = '" . $this->db->escape($data['payment_citybyadd']) . "', payment_barangay = '" . $this->db->escape($data['payment_barangay']) . "', shipping_citybyadd = '" . $this->db->escape($data['shipping_citybyadd']) . "', shipping_barangay = '" . $this->db->escape($data['shipping_barangay']) . "', payment_location = '".$data['payment_location']."', shipping_location = '".$data['shipping_location']."' WHERE order_id = '" . (int)$order_id . "'");
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$this->db->query("DELETE FROM " . DB_PREFIX . "order_product WHERE order_id = '" . (int)$order_id . "'");]]></search>
+            <add position="before"><![CDATA[
+
+                $this->db->query("UPDATE " . DB_PREFIX . "order SET  payment_citybyadd = '" . $this->db->escape($data['payment_citybyadd']) . "', payment_barangay = '" . $this->db->escape($data['payment_barangay']) . "', shipping_citybyadd = '" . $this->db->escape($data['shipping_citybyadd']) . "', shipping_barangay = '" . $this->db->escape($data['shipping_barangay']) . "', payment_location = '".$data['payment_location']."', shipping_location = '".$data['shipping_location']."' WHERE order_id = '" . (int)$order_id . "'");
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[, payment_city = '" . $this->db->escape($data['payment_city']) . "']]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[, shipping_city = '" . $this->db->escape($data['shipping_city']) . "']]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA['payment_city'            => $order_query->row['payment_city'],]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA['shipping_city'           => $order_query->row['shipping_city'],]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/view/theme/default/template/common/footer.twig">
+        <operation>
+            <search><![CDATA[</body></html>]]></search>
+            <add position="before"><![CDATA[
+                <script defer src="https://maps.google.com/maps/api/js?key=AIzaSyCPXuAg34IsWTAIrB6P7bcKTFmhA3Aenjs&sensor=false&callback=initMap"></script>
+                <script type="text/javascript">
+                    function initMap() {
+                    }
+                </script>
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/view/theme/default/template/checkout/checkout.twig">
+        <operation>
+            <search><![CDATA[<script type="text/javascript"><!--]]></search>
+            <add position="before"><![CDATA[
+                <style>
+                .map {
+                    border: none;
+                    height: 400px;
+                }
+                @media only screen and (max-width: 320px) {
+                    .map {
+                        border: none;
+                        height: 200px;
+                    }
+                }
+                </style>
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[//--></script>]]></search>
+            <add position="before"><![CDATA[
+                    function maploaded(prefix='') {
+                        var map;
+                        var markers = [];
+
+
+                        var haightAshbury = {lat: 23.2748308, lng: 77.4519248};
+
+                            var mapOptions = {
+                            zoom: 13,
+                            mapTypeId: google.maps.MapTypeId.ROADMAP,
+                            mapTypeControl: true,
+                            center: haightAshbury,
+                            fullscreenControl: false
+                            }
+
+                        map = new google.maps.Map(document.getElementById(`map${prefix}`), mapOptions);
+
+                        if(navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(function(position) {
+                            user_location = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                            map.setCenter(user_location);
+                            console.log(user_location);
+                            addMarker(user_location);
+                            }, function(error) {
+                                console.log(error);
+                                user_location = new google.maps.LatLng(haightAshbury.lat, haightAshbury.lng);
+                                console.log(user_location);
+                                map.setCenter(user_location);
+                                addMarker(user_location);
+                            });
+                        }
+
+                        function addMarker(location) {
+                            var marker = new google.maps.Marker({
+                            position: location,
+                            map: map,
+                            draggable:true,
+                            title:"Drag me!"
+                            });
+                            $(`#lat${prefix}`).val(location.lat());
+                            $(`#long${prefix}`).val(location.lng());
+                            markers.push(marker);
+                            marker.addListener('drag', handleDragEvent);
+                            marker.addListener('dragend', handleDragEvent);
+                        }
+
+                        // Sets the map on all markers in the array.
+                        function setMapOnAll(map) {
+                        for (var i = 0; i < markers.length; i++) {
+                            markers[i].setMap(map);
+                        }
+                        }
+
+                        // Removes the markers from the map, but keeps them in the array.
+                        function clearMarkers() {
+                        setMapOnAll(null);
+                        }
+
+                        // Deletes all markers in the array by removing references to them.
+                        function deleteMarkers() {
+                        clearMarkers();
+                        markers = [];
+                        }
+
+                        function handleDragEvent(e) {
+                            const latLng = e.latLng;
+                            var lng = latLng.lng();
+                            var lat = latLng.lat();
+                            $(`#lat${prefix}`).val(lat);
+                            $(`#long${prefix}`).val(lng);
+                        }
+                    }
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="catalog/view/theme/default/template/checkout/payment_address.twig">
+        <operation>
+            <search><![CDATA[<label class="col-sm-2 control-label" for="input-payment-city">{{ entry_city }}</label>]]></search>
+            <add position="replace" offset="4"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search index="4"><![CDATA[<div class="form-group required">]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[{% for custom_field in custom_fields %}]]></search>
+            <add position="before"><![CDATA[
+
+                <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-payment-city1">{{ entry_city }}</label>
+                <div class="col-sm-10">
+                    <select name="city_id" id="input-payment-city1" class="form-control"></select>
+                </div>
+                </div>
+
+                <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-payment-barangay">{{ entry_barangay }}</label>
+                <div class="col-sm-10">
+                    <select name="barangay_id" id="input-payment-barangay" class="form-control"></select>
+                </div>
+                </div>
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[<option value="{{ address.address_id }}" selected="selected">{{ address.firstname }} {{ address.lastname }}, {{ address.address_1 }}, {{ address.city }}, {{ address.zone }}, {{ address.country }}</option>]]></search>
+            <add position="replace"><![CDATA[
+
+                <option value="{{ address.address_id }}" selected="selected">{{ address.firstname }} {{ address.lastname }}, {{ address.address_1 }}, {{ address.country }}, {{ address.zone }}, {{ address.citybyadd }}, {{ address.barangay }}</option>
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[<option value="{{ address.address_id }}">{{ address.firstname }} {{ address.lastname }}, {{ address.address_1 }}, {{ address.city }}, {{ address.zone }}, {{ address.country }}</option>]]></search>
+            <add position="replace"><![CDATA[
+
+                <option value="{{ address.address_id }}">{{ address.firstname }} {{ address.lastname }}, {{ address.address_1 }}, {{ address.country }}, {{ address.zone }}, {{ address.citybyadd }}, {{ address.barangay }}</option>
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$('#collapse-payment-address select[name=\'country_id\']').trigger('change');]]></search>
+            <add position="before"><![CDATA[
+
+                $('#collapse-payment-address select[name=\'zone_id\']').on('change', function() {
+                    $.ajax({
+                        url: 'index.php?route=checkout/checkout/city&zone_id=' + this.value,
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('#collapse-payment-address select[name=\'zone_id\']').prop('disabled', true);
+                        },
+                        complete: function() {
+                            $('#collapse-payment-address select[name=\'zone_id\']').prop('disabled', false);
+                        },
+                        success: function(json) {
+                            html = '<option value="">{{ text_select }}</option>';
+
+                            if (json['city'] && json['city'] != '') {
+                                for (i = 0; i < json['city'].length; i++) {
+                                    html += '<option value="' + json['city'][i]['city_id'] + '"';
+
+                                    if (json['city'][i]['city_id'] == '{{ city_id }}') {
+                                        html += ' selected="selected"';
+                                    }
+
+                                    html += '>' + json['city'][i]['name'] + '</option>';
+                                }
+                            } else {
+                                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                            }
+
+                            $('#collapse-payment-address select[name=\'city_id\']').html(html);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+                });
+
+                //$('#collapse-payment-address select[name=\'region_id\']').on('change', function() {
+                //    $.ajax({
+                //        url: 'index.php?route=checkout/checkout/city&region_id=' + this.value,
+                //        dataType: 'json',
+                //        beforeSend: function() {
+                //            $('#collapse-payment-address select[name=\'region_id\']').prop('disabled', true);
+                //        },
+                //        complete: function() {
+                //            $('#collapse-payment-address select[name=\'region_id\']').prop('disabled', false);
+                //        },
+                //        success: function(json) {
+                //            html = '<option value="">{{ text_select }}</option>';
+
+                //            if (json['city'] && json['city'] != '') {
+                //                for (i = 0; i < json['city'].length; i++) {
+                //                    html += '<option value="' + json['city'][i]['city_id'] + '"';
+
+                //                    if (json['city'][i]['city_id'] == '{{ city_id }}') {
+                //                        html += ' selected="selected"';
+                //                    }
+
+                //                    html += '>' + json['city'][i]['name'] + '</option>';
+                //                }
+                //            } else {
+                //                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                //            }
+
+                //            $('#collapse-payment-address select[name=\'city_id\']').html(html);
+                //        },
+                //        error: function(xhr, ajaxOptions, thrownError) {
+                //            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                //        }
+                //    });
+                //});
+
+                $('#collapse-payment-address select[name=\'city_id\']').on('change', function() {
+                    $.ajax({
+                        url: 'index.php?route=checkout/checkout/barangay&city_id=' + this.value,
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('#collapse-payment-address select[name=\'city_id\']').prop('disabled', true);
+                        },
+                        complete: function() {
+                            $('#collapse-payment-address select[name=\'city_id\']').prop('disabled', false);
+                        },
+                        success: function(json) {
+                            html = '<option value="">{{ text_select }}</option>';
+
+                            if (json['barangay'] && json['barangay'] != '') {
+                                for (i = 0; i < json['barangay'].length; i++) {
+                                    html += '<option value="' + json['barangay'][i]['barangay_id'] + '"';
+
+                                    if (json['barangay'][i]['barangay_id'] == '{{ barangay_id }}') {
+                                        html += ' selected="selected"';
+                                    }
+
+                                    html += '>' + json['barangay'][i]['name'] + '</option>';
+                                }
+                            } else {
+                                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                            }
+
+                            $('#collapse-payment-address select[name=\'barangay_id\']').html(html);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+                });
+
+            ]]></add>
+        </operation>
+        <!-- map data -->
+
+            <!-- <operation>
+                <search><![CDATA[<form class="form-horizontal">]]></search>
+                <add position="before"><![CDATA[
+                    <style>
+                        #map {
+                            border: none;
+                            height: 400px;
+                        }
+                        @media only screen and (max-width: 320px) {
+                            #map {
+                            border: none;
+                            height: 200px;
+                            }
+                        }
+                    </style>
+                ]]></add>
+            </operation> -->
+
+            <operation>
+                <search index="5"><![CDATA[{% endfor %}]]></search>
+                <add position="after"><![CDATA[
+                    <div class="form-group" id="payment-map">
+                        <label class="col-sm-2 control-label">Map details</label>
+                        <div class="col-sm-10 payment-map">
+                        <input type="hidden" name="payment_lat" id="lat">
+                        <input type="hidden" name="payment_long" id="long">
+                        <div id="map" class="map"></div>
+                        <script type="text/javascript">
+                        $( document ).ready(function() {
+                            if($('#input-payment-barangay :selected').text() == ''){
+                            $('#payment-map').css('display', 'none');
+                            }
+                            $('#input-payment-barangay').on('change', function () {
+                                var optionSelected = $("option:selected", this);
+                                var valueSelected = this.value;
+                                if(valueSelected != '' && valueSelected != '0'){
+                                    $('#payment-map').css('display', 'block');
+                                } else {
+                                    $('#payment-map').css('display', 'none');
+                                }
+                            });
+                        });
+
+                        maploaded();
+
+                        </script>
+                        </div>
+                    </div>
+                ]]></add>
+            </operation>
+    </file>
+
+    <file path="catalog/view/theme/default/template/checkout/register.twig">
+        <operation>
+            <search><![CDATA[<label class="control-label" for="input-payment-city">{{ entry_city }}</label>]]></search>
+            <add position="replace" offset="2"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search index="7"><![CDATA[<div class="form-group required">]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[{% if custom_field.location == 'address' %}]]></search>
+            <add position="before" offset="2"><![CDATA[
+
+                <div class="form-group required">
+                    <label class="control-label" for="input-payment-city1">{{ entry_city }}</label>
+                    <select name="city_id" id="input-payment-city1" class="form-control"></select>
+                </div>
+
+                <div class="form-group required">
+                    <label class="control-label" for="input-payment-barangay">{{ entry_barangay }}</label>
+                    <select name="barangay_id" id="input-payment-barangay" class="form-control"></select>
+                </div>
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$('#collapse-payment-address select[name=\'country_id\']').trigger('change');]]></search>
+            <add position="before"><![CDATA[
+
+                $('#collapse-payment-address select[name=\'zone_id\']').on('change', function() {
+                    $.ajax({
+                    url: 'index.php?route=checkout/checkout/city&zone_id=' + this.value,
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $('#collapse-payment-address select[name=\'zone_id\']').prop('disabled', true);
+                    },
+                    complete: function() {
+                        $('#collapse-payment-address select[name=\'zone_id\']').prop('disabled', false);
+                    },
+                    success: function(json) {
+                        if (json['postcode_required'] == '1') {
+                        $('#collapse-payment-address input[name=\'postcode\']').parent().parent().addClass('required');
+                        } else {
+                        $('#collapse-payment-address input[name=\'postcode\']').parent().parent().removeClass('required');
+                        }
+
+                        html = '<option value="">{{ text_select }}</option>';
+
+                        if (json['city'] && json['city'] != '') {
+                        for (i = 0; i < json['city'].length; i++) {
+                            html += '<option value="' + json['city'][i]['city_id'] + '"';
+
+                            if (json['city'][i]['city_id'] == '{{ city_id }}') {
+                            html += ' selected="selected"';
+                            }
+
+                            html += '>' + json['city'][i]['name'] + '</option>';
+                        }
+                        } else {
+                        html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                        }
+
+                        $('#collapse-payment-address select[name=\'city_id\']').html(html);
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                    });
+                });
+
+                //$('#collapse-payment-address select[name=\'region_id\']').on('change', function() {
+                //    $.ajax({
+                //    url: 'index.php?route=checkout/checkout/city&region_id=' + this.value,
+                //    dataType: 'json',
+                //    beforeSend: function() {
+                //        $('#collapse-payment-address select[name=\'region_id\']').prop('disabled', true);
+                //    },
+                //    complete: function() {
+                //        $('#collapse-payment-address select[name=\'region_id\']').prop('disabled', false);
+                //    },
+                //    success: function(json) {
+                //        html = '<option value="">{{ text_select }}</option>';
+
+                //        if (json['city'] && json['city'] != '') {
+                //        for (i = 0; i < json['city'].length; i++) {
+                //            html += '<option value="' + json['city'][i]['city_id'] + '"';
+
+                //            if (json['city'][i]['city_id'] == '{{ city_id }}') {
+                //            html += ' selected="selected"';
+                //            }
+
+                //            html += '>' + json['city'][i]['name'] + '</option>';
+                //        }
+                //        } else {
+                //        html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                //        }
+
+                //        $('#collapse-payment-address select[name=\'city_id\']').html(html);
+                //    },
+                //    error: function(xhr, ajaxOptions, thrownError) {
+                //        alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                //    }
+                //    });
+                //});
+
+                $('#collapse-payment-address select[name=\'city_id\']').on('change', function() {
+                    $.ajax({
+                    url: 'index.php?route=checkout/checkout/barangay&city_id=' + this.value,
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $('#collapse-payment-address select[name=\'city_id\']').prop('disabled', true);
+                    },
+                    complete: function() {
+                        $('#collapse-payment-address select[name=\'city_id\']').prop('disabled', false);
+                    },
+                    success: function(json) {
+                        html = '<option value="">{{ text_select }}</option>';
+
+                        if (json['barangay'] && json['barangay'] != '') {
+                        for (i = 0; i < json['barangay'].length; i++) {
+                            html += '<option value="' + json['barangay'][i]['barangay_id'] + '"';
+
+                            if (json['barangay'][i]['barangay_id'] == '{{ barangay_id }}') {
+                            html += ' selected="selected"';
+                            }
+
+                            html += '>' + json['barangay'][i]['name'] + '</option>';
+                        }
+                        } else {
+                        html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                        }
+
+                        $('#collapse-payment-address select[name=\'barangay_id\']').html(html);
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                    });
+                });
+
+            ]]></add>
+        </operation>
+
+        <!-- map data start -->
+        <operation>
+            <search index="2"><![CDATA[<div class="checkbox">]]></search>
+            <add position="before"><![CDATA[
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="form-group" id="payment-map">
+                            <label class="col-sm-2 control-label">Map details</label>
+                            <div class="col-sm-10 payment-map">
+                                <input type="hidden" name="payment_lat" id="lat">
+                                <input type="hidden" name="payment_long" id="long">
+                                <div id="map" class="map"></div>
+                                <script type="text/javascript">
+                                $( document ).ready(function() {
+                                    if($('#input-payment-barangay :selected').text() == ''){
+                                    $('#payment-map').css('display', 'none');
+                                    }
+                                    $('#input-payment-barangay').on('change', function () {
+                                        var optionSelected = $("option:selected", this);
+                                        var valueSelected = this.value;
+                                        if(valueSelected != '' && valueSelected != '0'){
+                                            $('#payment-map').css('display', 'block');
+                                        } else {
+                                            $('#payment-map').css('display', 'none');
+                                        }
+                                    });
+                                });
+
+                                maploaded();
+
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ]]></add>
+        </operation>
+        <!-- map data end -->
+    </file>
+
+    <file path="catalog/view/theme/default/template/checkout/guest.twig">
+        <operation>
+            <search><![CDATA[<label class="control-label" for="input-payment-city">{{ entry_city }}</label>]]></search>
+            <add position="replace" offset="2"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search index="5"><![CDATA[<div class="form-group required">]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[<label class="control-label" for="input-payment-address-2">{{ entry_address_2 }}</label>]]></search>
+            <add position="replace" offset="2"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search index="1"><![CDATA[<div class="form-group">]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[<label class="control-label" for="input-payment-postcode">{{ entry_postcode }}</label>]]></search>
+            <add position="replace" offset="2"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search index="6"><![CDATA[<div class="form-group required">]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search index="1"><![CDATA[{% for custom_field in custom_fields %}]]></search>
+            <add position="before"><![CDATA[
+
+                <div class="form-group required">
+                <label class="control-label" for="input-payment-city">{{ entry_city }}</label>
+                    <select name="city_id" id="input-payment-city" class="form-control"></select>
+                </div>
+                <div class="form-group required">
+                <label class="control-label" for="input-payment-barangay">{{ entry_barangay }}</label>
+                    <select name="barangay_id" id="input-payment-barangay" class="form-control"></select>
+                </div>
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$('#collapse-payment-address select[name=\'country_id\']').trigger('change');]]></search>
+            <add position="before"><![CDATA[
+
+                $('#collapse-payment-address select[name=\'zone_id\']').on('change', function() {
+                    $.ajax({
+                        url: 'index.php?route=checkout/checkout/city&zone_id=' + this.value,
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('#collapse-payment-address select[name=\'zone_id\']').prop('disabled', true);
+                        },
+                        complete: function() {
+                            $('#collapse-payment-address select[name=\'zone_id\']').prop('disabled', false);
+                        },
+                        success: function(json) {
+                            html = '<option value="">{{ text_select }}</option>';
+
+                            if (json['city'] && json['city'] != '') {
+                                for (i = 0; i < json['city'].length; i++) {
+                                    html += '<option value="' + json['city'][i]['city_id'] + '"';
+
+                                    if (json['city'][i]['city_id'] == '{{ city_id }}') {
+                                        html += ' selected="selected"';
+                                    }
+
+                                    html += '>' + json['city'][i]['name'] + '</option>';
+                                }
+                            } else {
+                                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                            }
+
+                            $('#collapse-payment-address select[name=\'city_id\']').html(html);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+                });
+
+                $('#collapse-payment-address select[name=\'city_id\']').on('change', function() {
+                    $.ajax({
+                        url: 'index.php?route=checkout/checkout/barangay&city_id=' + this.value,
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('#collapse-payment-address select[name=\'city_id\']').prop('disabled', true);
+                        },
+                        complete: function() {
+                            $('#collapse-payment-address select[name=\'city_id\']').prop('disabled', false);
+                        },
+                        success: function(json) {
+                            if (json['postcode_required'] == '1') {
+                                $('#collapse-payment-address input[name=\'postcode\']').parent().parent().addClass('required');
+                            } else {
+                                $('#collapse-payment-address input[name=\'postcode\']').parent().parent().removeClass('required');
+                            }
+
+                            html = '<option value="">{{ text_select }}</option>';
+
+                            if (json['barangay'] && json['barangay'] != '') {
+                                for (i = 0; i < json['barangay'].length; i++) {
+                                    html += '<option value="' + json['barangay'][i]['barangay_id'] + '"';
+
+                                    if (json['barangay'][i]['barangay_id'] == '{{ barangay_id }}') {
+                                        html += ' selected="selected"';
+                                    }
+
+                                    html += '>' + json['barangay'][i]['name'] + '</option>';
+                                }
+                            } else {
+                                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                            }
+
+                            $('#collapse-payment-address select[name=\'barangay_id\']').html(html);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+                });
+
+            ]]></add>
+        </operation>
+
+        <!-- map data start -->
+        <operation>
+            <search><![CDATA[{% if shipping_required %}]]></search>
+            <add position="before"><![CDATA[
+                <div class="row">
+                    <fieldset id="location-map">
+                        <div class="form-group" id="payment-map">
+                            <div class="col-sm-2">
+                            <label class="control-label">Map details</label>
+                            </div>
+
+                            <div class="col-sm-10 payment-map">
+                            <input type="hidden" name="payment_lat" id="lat3">
+                            <input type="hidden" name="payment_long" id="long3">
+                            <div id="map3" class="map"></div>
+                            <script type="text/javascript">
+                            $( document ).ready(function() {
+                                if($('#input-payment-barangay :selected').text() == ''){
+                                $('#payment-map').css('display', 'none');
+                                }
+                                $('#input-payment-barangay').on('change', function () {
+                                    var optionSelected = $("option:selected", this);
+                                    var valueSelected = this.value;
+                                    if(valueSelected != '' && valueSelected != '0'){
+                                        $('#payment-map').css('display', 'block');
+                                    } else {
+                                        $('#payment-map').css('display', 'none');
+                                    }
+                                });
+                            });
+
+                            maploaded('3');
+
+                            </script>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            ]]></add>
+        </operation>
+        <!-- map data end -->
+    </file>
+
+    <file path="catalog/view/theme/default/template/checkout/guest_shipping.twig">
+        <operation>
+            <search><![CDATA[<label class="col-sm-2 control-label" for="input-shipping-city">{{ entry_city }}</label>]]></search>
+            <add position="replace" offset="4"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search index="4"><![CDATA[<div class="form-group required">]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        
+        <operation>
+            <search><![CDATA[<label class="col-sm-2 control-label" for="input-shipping-address-2">{{ entry_address_2 }}</label>]]></search>
+            <add position="replace" offset="4"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search index="1"><![CDATA[<div class="form-group">]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[<label class="col-sm-2 control-label" for="input-shipping-postcode">{{ entry_postcode }}</label>]]></search>
+            <add position="replace" offset="4"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search index="4"><![CDATA[<div class="form-group required">]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+
+        <operation>
+            <search><![CDATA[{% for custom_field in custom_fields %}]]></search>
+            <add position="before"><![CDATA[
+                <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-shipping-city">{{ entry_city }}</label>
+                    <div class="col-sm-10">
+                        <select name="city_id" id="input-shipping-city" class="form-control">
+                        <option value="">{{ text_select }}</option>
+                        {% for city in cities %}
+                            {% if city.city_id == city_id %}
+                            <option value="{{ city.city_id }}" selected="selected">{{ city.name }}</option>
+                            {% else %}
+                            <option value="{{ city.city_id }}">{{ city.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-shipping-barangay">{{ entry_barangay }}</label>
+                    <div class="col-sm-10">
+                        <select name="barangay_id" id="input-shipping-barangay" class="form-control">
+                        <option value="">{{ text_select }}</option>
+                        {% for barangay in barangays %}
+                            {% if barangay.barangay_id == barangay_id %}
+                            <option value="{{ barangay.barangay_id }}" selected="selected">{{ barangay.name }}</option>
+                            {% else %}
+                            <option value="{{ barangay.barangay_id }}">{{ barangay.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$('#collapse-shipping-address select[name=\'country_id\']').trigger('change');]]></search>
+            <add position="before"><![CDATA[
+
+                $('#collapse-shipping-address select[name=\'zone_id\']').on('change', function() {
+                    $.ajax({
+                        url: 'index.php?route=checkout/checkout/city&zone_id=' + this.value,
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('#collapse-shipping-address select[name=\'zone_id\']').prop('disabled', true);
+                        },
+                        complete: function() {
+                            $('#collapse-shipping-address select[name=\'zone_id\']').prop('disabled', false);
+                        },
+                        success: function(json) {
+                            html = '<option value="">{{ text_select }}</option>';
+
+                            if (json['city'] && json['city'] != '') {
+                                for (i = 0; i < json['city'].length; i++) {
+                                    html += '<option value="' + json['city'][i]['city_id'] + '"';
+
+                                    if (json['city'][i]['city_id'] == '{{ city_id }}') {
+                                        html += ' selected="selected"';
+                                    }
+
+                                    html += '>' + json['city'][i]['name'] + '</option>';
+                                }
+                            } else {
+                                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                            }
+
+                            $('#collapse-shipping-address select[name=\'city_id\']').html(html);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+                });
+
+                $('#collapse-shipping-address select[name=\'city_id\']').on('change', function() {
+                    $.ajax({
+                        url: 'index.php?route=checkout/checkout/barangay&city_id=' + this.value,
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('#collapse-shipping-address select[name=\'city_id\']').prop('disabled', true);
+                        },
+                        complete: function() {
+                            $('#collapse-shipping-address select[name=\'city_id\']').prop('disabled', false);
+                        },
+                        success: function(json) {
+                            if (json['postcode_required'] == '1') {
+                                $('#collapse-shipping-address input[name=\'postcode\']').parent().parent().addClass('required');
+                            } else {
+                                $('#collapse-shipping-address input[name=\'postcode\']').parent().parent().removeClass('required');
+                            }
+
+                            html = '<option value="">{{ text_select }}</option>';
+
+                            if (json['barangay'] && json['barangay'] != '') {
+                                for (i = 0; i < json['barangay'].length; i++) {
+                                    html += '<option value="' + json['barangay'][i]['barangay_id'] + '"';
+
+                                    if (json['barangay'][i]['barangay_id'] == '{{ barangay_id }}') {
+                                        html += ' selected="selected"';
+                                    }
+
+                                    html += '>' + json['barangay'][i]['name'] + '</option>';
+                                }
+                            } else {
+                                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                            }
+
+                            $('#collapse-shipping-address select[name=\'barangay_id\']').html(html);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+                });
+
+            ]]></add>
+        </operation>
+        <!-- map data start -->
+        <operation>
+            <search><![CDATA[<div class="buttons">]]></search>
+            <add position="before"><![CDATA[
+                <div class="form-group" id="shipping-map">
+                    <label class="col-sm-2 control-label">Map details</label>
+                    <div class="col-sm-10 shipping-map">
+                    <input type="hidden" name="shipping_lat" id="lat4">
+                    <input type="hidden" name="shipping_long" id="long4">
+                    <div id="map" class="map"></div>
+                    <script type="text/javascript">
+                    $( document ).ready(function() {
+                        if($('#input-shipping-barangay :selected').text() == ''){
+                        $('#shipping-map').css('display', 'none');
+                        }
+                        $('#input-shipping-barangay').on('change', function () {
+                            var optionSelected = $("option:selected", this);
+                            var valueSelected = this.value;
+                            if(valueSelected != '' && valueSelected != '0'){
+                                $('#shipping-map').css('display', 'block');
+                            } else {
+                                $('#shipping-map').css('display', 'none');
+                            }
+                        });
+                    });
+
+                    maploaded('4');
+
+                    </script>
+                    </div>
+                </div>
+            ]]></add>
+        </operation>
+        <!-- map data end -->
+    </file>
+
+    <file path="catalog/view/theme/default/template/checkout/shipping_address.twig">
+        <operation>
+            <search><![CDATA[<label class="col-sm-2 control-label" for="input-shipping-city">{{ entry_city }}</label>]]></search>
+            <add position="replace" offset="4"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search index="4"><![CDATA[<div class="form-group required">]]></search>
+            <add position="replace"><![CDATA[]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[{% for custom_field in custom_fields %}]]></search>
+            <add position="before"><![CDATA[
+
+                <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-shipping-city">{{ entry_city }}</label>
+                <div class="col-sm-10">
+                    <select name="city_id" id="input-shipping-city" class="form-control"></select>
+                </div>
+                </div>
+                <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-shipping-barangay">{{ entry_barangay }}</label>
+                <div class="col-sm-10">
+                    <select name="barangay_id" id="input-shipping-barangay" class="form-control"></select>
+                </div>
+                </div>
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[<option value="{{ address.address_id }}" selected="selected">{{ address.firstname }} {{ address.lastname }}, {{ address.address_1 }}, {{ address.city }}, {{ address.zone }}, {{ address.country }}</option>]]></search>
+            <add position="replace"><![CDATA[
+
+                <option value="{{ address.address_id }}" selected="selected">{{ address.firstname }} {{ address.lastname }}, {{ address.address_1 }}, {{ address.country }}, {{ address.zone }}, {{ address.citybyadd }}, {{ address.barangay }}</option>
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[<option value="{{ address.address_id }}">{{ address.firstname }} {{ address.lastname }}, {{ address.address_1 }}, {{ address.city }}, {{ address.zone }}, {{ address.country }}</option>]]></search>
+            <add position="replace"><![CDATA[
+
+                <option value="{{ address.address_id }}">{{ address.firstname }} {{ address.lastname }}, {{ address.address_1 }}, {{ address.country }}, {{ address.zone }}, {{ address.citybyadd }}, {{ address.barangay }}</option>
+
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[$('#collapse-shipping-address select[name=\'country_id\']').trigger('change');]]></search>
+            <add position="before"><![CDATA[
+
+                $('#collapse-shipping-address select[name=\'zone_id\']').on('change', function() {
+                    $.ajax({
+                        url: 'index.php?route=checkout/checkout/city&zone_id=' + this.value,
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('#collapse-shipping-address select[name=\'zone_id\']').prop('disabled', true);
+                        },
+                        complete: function() {
+                            $('#collapse-shipping-address select[name=\'zone_id\']').prop('disabled', false);
+                        },
+                        success: function(json) {
+                            html = '<option value="">{{ text_select }}</option>';
+
+                            if (json['city'] && json['city'] != '') {
+                                for (i = 0; i < json['city'].length; i++) {
+                                    html += '<option value="' + json['city'][i]['city_id'] + '"';
+
+                                    if (json['city'][i]['city_id'] == '{{ city_id }}') {
+                                        html += ' selected="selected"';
+                                    }
+
+                                    html += '>' + json['city'][i]['name'] + '</option>';
+                                }
+                            } else {
+                                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                            }
+
+                            $('#collapse-shipping-address select[name=\'city_id\']').html(html);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+                });
+
+                //$('#collapse-shipping-address select[name=\'region_id\']').on('change', function() {
+                //    $.ajax({
+                //        url: 'index.php?route=checkout/checkout/city&region_id=' + this.value,
+                //        dataType: 'json',
+                //        beforeSend: function() {
+                //            $('#collapse-shipping-address select[name=\'region_id\']').prop('disabled', true);
+                //        },
+                //        complete: function() {
+                //            $('#collapse-shipping-address select[name=\'region_id\']').prop('disabled', false);
+                //        },
+                //        success: function(json) {
+                //            html = '<option value="">{{ text_select }}</option>';
+
+                //            if (json['city'] && json['city'] != '') {
+                //                for (i = 0; i < json['city'].length; i++) {
+                //                    html += '<option value="' + json['city'][i]['city_id'] + '"';
+
+                //                    if (json['city'][i]['city_id'] == '{{ city_id }}') {
+                //                        html += ' selected="selected"';
+                //                    }
+
+                //                    html += '>' + json['city'][i]['name'] + '</option>';
+                //                }
+                //            } else {
+                //                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                //            }
+
+                //            $('#collapse-shipping-address select[name=\'city_id\']').html(html);
+                //        },
+                //        error: function(xhr, ajaxOptions, thrownError) {
+                //            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                //        }
+                //    });
+                //});
+
+                $('#collapse-shipping-address select[name=\'city_id\']').on('change', function() {
+                    $.ajax({
+                        url: 'index.php?route=checkout/checkout/barangay&city_id=' + this.value,
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('#collapse-shipping-address select[name=\'city_id\']').prop('disabled', true);
+                        },
+                        complete: function() {
+                            $('#collapse-shipping-address select[name=\'city_id\']').prop('disabled', false);
+                        },
+                        success: function(json) {
+                            if (json['postcode_required'] == '1') {
+                                $('#collapse-shipping-address input[name=\'postcode\']').parent().parent().addClass('required');
+                            } else {
+                                $('#collapse-shipping-address input[name=\'postcode\']').parent().parent().removeClass('required');
+                            }
+
+                            html = '<option value="">{{ text_select }}</option>';
+
+                            if (json['barangay'] && json['barangay'] != '') {
+                                for (i = 0; i < json['barangay'].length; i++) {
+                                    html += '<option value="' + json['barangay'][i]['barangay_id'] + '"';
+
+                                    if (json['barangay'][i]['barangay_id'] == '{{ barangay_id }}') {
+                                        html += ' selected="selected"';
+                                    }
+
+                                    html += '>' + json['barangay'][i]['name'] + '</option>';
+                                }
+                            } else {
+                                html += '<option value="0" selected="selected">{{ text_none }}</option>';
+                            }
+
+                            $('#collapse-shipping-address select[name=\'barangay_id\']').html(html);
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+                });
+
+            ]]></add>
+        </operation>
+        <!-- map data -->
+
+            <!-- <operation>
+                <search><![CDATA[<form class="form-horizontal">]]></search>
+                <add position="before"><![CDATA[
+                    <style>
+                        #map {
+                            border: none;
+                            height: 400px;
+                        }
+                        @media only screen and (max-width: 320px) {
+                            #map {
+                            border: none;
+                            height: 200px;
+                            }
+                        }
+                    </style>
+                ]]></add>
+            </operation> -->
+
+            <operation>
+                <search index="5"><![CDATA[{% endfor %}]]></search>
+                <add position="after"><![CDATA[
+                    <div class="form-group" id="shipping-map">
+                        <label class="col-sm-2 control-label">Map details</label>
+                        <div class="col-sm-10 shipping-map">
+                        <input type="hidden" name="shipping_lat" id="lat1">
+                        <input type="hidden" name="shipping_long" id="long1">
+                        <div id="map1" class="map"></div>
+                        <script type="text/javascript">
+                        $( document ).ready(function() {
+                            if($('#input-shipping-barangay :selected').text() == ''){
+                            $('#shipping-map').css('display', 'none');
+                            }
+                            $('#input-shipping-barangay').on('change', function () {
+                                var optionSelected = $("option:selected", this);
+                                var valueSelected = this.value;
+                                if(valueSelected != '' && valueSelected != '0'){
+                                    $('#shipping-map').css('display', 'block');
+                                } else {
+                                    $('#shipping-map').css('display', 'none');
+                                }
+                            });
+                        });
+                        maploaded('1');
+                        </script>
+                        </div>
+                    </div>
+                ]]></add>
+            </operation>
+    </file>
+
+<!-- shipping methods -->
+
+    <!-- For Flat shipping Method Start-->
+    <file path="catalog/model/extension/shipping/flat.php">
+        <operation>
+            <search><![CDATA[$this->config->get('shipping_flat_cost')]]></search>
+            <add position="replace"><![CDATA[$rate]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[if (!$this->config->get('shipping_flat_geo_zone_id')) {]]></search>
+            <add position="before"><![CDATA[
+                $this->load->model('localisation/barangay');
+                $barangay = $this->model_localisation_barangay->getBarangay($address['barangay_id']);
+
+                if($barangay['flat_shipping'] != '' && $barangay['flat_shipping'] != 0){
+                    $rate = $barangay['flat_shipping'];
+                } else {
+                    $rate = $this->config->get('shipping_flat_cost');
+                }
+            ]]></add>
+        </operation>
+    </file>
+    <!-- For Flat shipping Method end-->
+
+    <!-- For Free shipping Method Start-->
+    <file path="catalog/model/extension/shipping/free.php">
+        <operation>
+            <search><![CDATA[if (!$this->config->get('shipping_free_geo_zone_id')) {]]></search>
+            <add position="before"><![CDATA[
+                $this->load->model('localisation/barangay');
+                $barangay = $this->model_localisation_barangay->getBarangay($address['barangay_id']);
+            ]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[if (!$this->config->get('shipping_free_geo_zone_id')) {]]></search>
+            <add position="replace"><![CDATA[if (!$this->config->get('shipping_free_geo_zone_id') && $barangay['free_shipping_status'] == '1') {]]></add>
+        </operation>
+
+        <operation>
+            <search><![CDATA[} elseif ($query->num_rows) {]]></search>
+            <add position="replace"><![CDATA[} elseif ($query->num_rows && $barangay['free_shipping_status'] == '1') {]]></add>
+        </operation>
+
+    </file>
+    <!-- For Free shipping Method end-->
+
+<!-- shipping methods -->
+</modification>
